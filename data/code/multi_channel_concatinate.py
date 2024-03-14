@@ -66,7 +66,7 @@ for index, row in filtered_dji_data.iterrows():
 final_df = pd.DataFrame(final_data)
 
 # Display the first few rows to verify the structure
-final_df.head()
+# final_df.head()
 
 # Save the final_df to a csv file
 final_df.to_csv('data/final_data.csv', index=False)
