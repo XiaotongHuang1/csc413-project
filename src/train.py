@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from transformers import BertTokenizer, Trainer, BertForSequenceClassification, TrainingArguments
 
-df = pd.read_csv('../data/final_data.csv') ## use your own customized dataset
+df = pd.read_csv('../data/final_data_top5.csv') ## use your own customized dataset
 df['headlines'] = df['headlines'].apply(lambda x: ast.literal_eval(x))
 df['headlines'] = df['headlines'].apply(lambda x: '[SEP]'.join(x))
 df['headlines'] = "[CLS]" + df['headlines']
@@ -34,13 +34,13 @@ dataset_train = Dataset.from_pandas(df_train)
 dataset_val = Dataset.from_pandas(df_val)
 dataset_test = Dataset.from_pandas(df_test)
 
-dataset_train = dataset_train.map(lambda e: tokenizer(e['input'], truncation=True, padding='max_length', max_length=128), batched=True)
-dataset_val = dataset_val.map(lambda e: tokenizer(e['input'], truncation=True, padding='max_length', max_length=128), batched=True)
-dataset_test = dataset_test.map(lambda e: tokenizer(e['input'], truncation=True, padding='max_length' , max_length=128), batched=True)
+dataset_train = dataset_train.map(lambda e: tokenizer(e['headlines'], truncation=True, padding='max_length', max_length=128), batched=True)
+dataset_val = dataset_val.map(lambda e: tokenizer(e['headlines'], truncation=True, padding='max_length', max_length=128), batched=True)
+dataset_test = dataset_test.map(lambda e: tokenizer(e['headlines'], truncation=True, padding='max_length' , max_length=128), batched=True)
 
-dataset_train.set_format(type='torch', columns=['input_ids', 'token_type_ids', 'attention_mask', 'label'])
-dataset_val.set_format(type='torch', columns=['input_ids', 'token_type_ids', 'attention_mask', 'label'])
-dataset_test.set_format(type='torch', columns=['input_ids', 'token_type_ids', 'attention_mask', 'label'])
+dataset_train.set_format(type='torch', columns=['input_ids', 'token_type_ids', 'attention_mask', 'y'])
+dataset_val.set_format(type='torch', columns=['input_ids', 'token_type_ids', 'attention_mask', 'y'])
+dataset_test.set_format(type='torch', columns=['input_ids', 'token_type_ids', 'attention_mask', 'y'])
 
 def compute_metrics(eval_pred):
     predictions, labels = eval_pred
@@ -48,7 +48,7 @@ def compute_metrics(eval_pred):
     return {'accuracy' : accuracy_score(predictions, labels)}
 
 args = TrainingArguments(
-        output_dir = 'temp/',
+        output_dir = '../temp/',
         evaluation_strategy = 'epoch',
         save_strategy = 'epoch',
         learning_rate=2e-5,
@@ -70,7 +70,7 @@ trainer = Trainer(
 
 trainer.train()
 
-model.eval()
+finbert.eval()
 trainer.predict(dataset_test).metrics
 
 trainer.save_model('finbert-sentiment/')
