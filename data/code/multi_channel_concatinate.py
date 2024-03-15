@@ -46,7 +46,7 @@ for index, row in filtered_dji_data.iterrows():
     daily_headlines = headlines_data[headlines_data['Date'] == row['Date']]['headline'].tolist()
     
     # Ensure only the top 25 headlines are considered
-    daily_headlines = daily_headlines[:25]
+    daily_headlines = daily_headlines[:5]
 
     # print(daily_headlines)
     # print(row['Date'])
@@ -69,4 +69,4 @@ final_df = pd.DataFrame(final_data)
 # final_df.head()
 
 # Save the final_df to a csv file
-final_df.to_csv('data/final_data.csv', index=False)
+final_df.to_csv('data/final_data_top5.csv', index=False)
