@@ -44,35 +44,38 @@ dataset_train.set_format(type='torch', columns=['input_ids', 'token_type_ids', '
 dataset_val.set_format(type='torch', columns=['input_ids', 'token_type_ids', 'attention_mask', 'label'])
 dataset_test.set_format(type='torch', columns=['input_ids', 'token_type_ids', 'attention_mask', 'label'])
 
-def compute_metrics(eval_pred):
-    predictions, labels = eval_pred
-    predictions = np.argmax(predictions, axis=1)
-    return {'accuracy' : accuracy_score(predictions, labels)}
+print(dataset_train.shape)
+print(dataset_train["input_ids"].shape)
 
-args = TrainingArguments(
-        output_dir = '../temp/',
-        evaluation_strategy = 'epoch',
-        save_strategy = 'epoch',
-        learning_rate=2e-5,
-        per_device_train_batch_size=32,
-        per_device_eval_batch_size=32,
-        num_train_epochs=5,
-        weight_decay=0.01,
-        load_best_model_at_end=True,
-        metric_for_best_model='accuracy',
-)
+# def compute_metrics(eval_pred):
+#     predictions, labels = eval_pred
+#     predictions = np.argmax(predictions, axis=1)
+#     return {'accuracy' : accuracy_score(predictions, labels)}
 
-trainer = Trainer(
-        model=finbert,                         # the instantiated 🤗 Transformers model to be trained
-        args=args,                  # training arguments, defined above
-        train_dataset=dataset_train,         # training dataset
-        eval_dataset=dataset_val,            # evaluation dataset
-        compute_metrics=compute_metrics
-)
+# args = TrainingArguments(
+#         output_dir = '../temp/',
+#         evaluation_strategy = 'epoch',
+#         save_strategy = 'epoch',
+#         learning_rate=2e-5,
+#         per_device_train_batch_size=32,
+#         per_device_eval_batch_size=32,
+#         num_train_epochs=5,
+#         weight_decay=0.01,
+#         load_best_model_at_end=True,
+#         metric_for_best_model='accuracy',
+# )
 
-trainer.train()
+# trainer = Trainer(
+#         model=finbert,                         # the instantiated 🤗 Transformers model to be trained
+#         args=args,                  # training arguments, defined above
+#         train_dataset=dataset_train,         # training dataset
+#         eval_dataset=dataset_val,            # evaluation dataset
+#         compute_metrics=compute_metrics
+# )
 
-finbert.eval()
-trainer.predict(dataset_test).metrics
+# trainer.train()
 
-trainer.save_model('finbert-sentiment/')
+# finbert.eval()
+# trainer.predict(dataset_test).metrics
+
+# trainer.save_model('finbert-sentiment/')
