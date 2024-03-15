@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 
 # Load the data from the csv files
-headlines_data = pd.read_csv('data/clean_train_10years_max25.csv')
-dji_data = pd.read_csv('data/DJI_11to20_prices.csv')
+headlines_data = pd.read_csv('data/financial_headlines.csv')
+dji_data = pd.read_csv('data/DJI_99to23_prices.csv')
 
 # Convert 'Date' column to datetime
 dji_data['Date'] = pd.to_datetime(dji_data['Date'])
@@ -14,8 +14,8 @@ dji_data = dji_data.sort_values(by='Date').reset_index(drop=True)
 headlines_data = headlines_data.sort_values(by='Date').reset_index(drop=True)
 
 # Filter the dji_data from 2018-01-02 to 2020-06-03
-start_date = pd.to_datetime('2011-04-14')
-end_date = pd.to_datetime('2020-06-03')
+start_date = pd.to_datetime('2000-01-01')
+end_date = pd.to_datetime('2023-12-31')
 filtered_dji_data = dji_data[(dji_data['Date'] >= start_date) & (dji_data['Date'] <= end_date)]
 
 print(filtered_dji_data.head())
@@ -107,4 +107,4 @@ final_df = pd.DataFrame(final_data)
 # final_df.head()
 
 # Save the final_df to a csv file
-final_df.to_csv('data/final_data_top25.csv', index=False)
+final_df.to_csv('data/final_data_99to23.csv', index=False)
