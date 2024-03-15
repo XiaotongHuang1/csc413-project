@@ -3,13 +3,13 @@ import pandas as pd
 import csv
 from datetime import datetime
 
-csv_file_path = 'csv\clean_train.csv'
-sorted_csv_file_path = 'clean_train_max25.csv'
+csv_file_path = 'data/train.csv'
+sorted_csv_file_path = 'data/sorted_train.csv'
 
-# Load the CSV data into a DataFrame
-df = pd.read_csv(csv_file_path, encoding='utf-8')
 
 def sort_by_date(data):
+    # Load the CSV data into a DataFrame
+    df = pd.read_csv(data, encoding='utf-8')
     # Assuming your date column is named 'date' and the headline column is named 'headline'
     # If they have different names, replace 'date' and 'headline' with the actual column names
     try:
@@ -40,12 +40,15 @@ def sort_by_date(data):
 def max_25_news_per_day(data):
 
     df = pd.read_csv(data, encoding='utf-8')
-    # We only need 2018 - 2020 data
+    # We only need 2010 - 2020 data
     df['date'] = pd.to_datetime(df['date'], errors='coerce')
-    df = df[df['date'].dt.year >= 2018]
+    df = df[df['date'].dt.year >= 2010]
+    # if there don't have 25 news, drop the date
+    df = df.groupby('date').filter(lambda x: len(x) >= 25)
     # Group by date and select the first 25 rows of each group
     df = df.groupby('date').head(25)
     df.to_csv('clean_train_max25.csv', index=False, encoding='utf-8')
 
-max_25_news_per_day(csv_file_path)
+# sort_by_date(csv_file_path)
+max_25_news_per_day(sorted_csv_file_path)
     

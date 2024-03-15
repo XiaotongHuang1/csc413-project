@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 
 # Load the data from the csv files
-headlines_data = pd.read_csv('data/clean_train_max25.csv')
-dji_data = pd.read_csv('data/DJI_18to20_prices.csv')
+headlines_data = pd.read_csv('data/clean_train_10years_max25.csv')
+dji_data = pd.read_csv('data/DJI_11to20_prices.csv')
 
 # Convert 'Date' column to datetime
 dji_data['Date'] = pd.to_datetime(dji_data['Date'])
@@ -14,7 +14,7 @@ dji_data = dji_data.sort_values(by='Date').reset_index(drop=True)
 headlines_data = headlines_data.sort_values(by='Date').reset_index(drop=True)
 
 # Filter the dji_data from 2018-01-02 to 2020-06-03
-start_date = pd.to_datetime('2018-01-02')
+start_date = pd.to_datetime('2011-04-14')
 end_date = pd.to_datetime('2020-06-03')
 filtered_dji_data = dji_data[(dji_data['Date'] >= start_date) & (dji_data['Date'] <= end_date)]
 
@@ -45,8 +45,8 @@ for index, row in filtered_dji_data.iterrows():
     # Fetch the corresponding day's headlines
     daily_headlines = headlines_data[headlines_data['Date'] == row['Date']]['headline'].tolist()
     
-    # Ensure only the top 25 headlines are considered
-    daily_headlines = daily_headlines[:5]
+    # Choose how many headlines to consider
+    daily_headlines = daily_headlines[:25]
 
     # print(daily_headlines)
     # print(row['Date'])
@@ -69,4 +69,4 @@ final_df = pd.DataFrame(final_data)
 # final_df.head()
 
 # Save the final_df to a csv file
-final_df.to_csv('data/final_data_top5.csv', index=False)
+final_df.to_csv('data/final_data_top25.csv', index=False)
