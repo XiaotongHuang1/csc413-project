@@ -42,11 +42,11 @@ def fetch_data(start_id, end_id, page_size, total_items, headlines, date_publish
             offset = 0
 
 def main():
-    page_size = 30
-    total_items = math.inf
+    page_size = 24
+    total_items = 999999999
     num_threads = 100
     start_id = 10000000
-    id_range = 100
+    id_range = 10
 
     headlines = []
     date_publisheds = []
