@@ -3,8 +3,8 @@ import pandas as pd
 import csv
 from datetime import datetime
 
-csv_file_path = 'data/train.csv'
-sorted_csv_file_path = 'data/sorted_train.csv'
+csv_file_path = 'dataset_embedding_99to23.csv'
+sorted_csv_file_path = 'data/sorted_cnbc_embedding_dataset.csv'
 
 
 def sort_by_date(data):
@@ -37,6 +37,67 @@ def sort_by_date(data):
     df_sorted.to_csv(sorted_csv_file_path, index=False, encoding='utf-8')
 
 
+def sort_by_date1(data):
+    # Load the CSV data into a DataFrame
+    df = pd.read_csv(data, encoding='utf-8')
+
+    try:
+        # Convert the 'date' column to datetime format including the timezone
+        # The 'date' format includes timezone information, hence we use '%Y-%m-%dT%H:%M:%S%z'
+        df['date'] = pd.to_datetime(df['date'], format='%Y-%m-%dT%H:%M:%S%z')
+    except KeyError:
+        # If there's no 'date' column, it will raise a KeyError
+        print("Error: No 'date' column found in the CSV file.")
+        return  # Use 'return' instead of 'exit()' for better handling within scripts or notebooks
+    except ValueError as e:
+        # Handle rows with incorrect date format; for simplicity, let's drop these rows
+        print(f"ValueError encountered: {e}")
+        print("Rows with incorrect date format will be dropped.")
+        df['date'] = pd.to_datetime(df['date'], format='%Y-%m-%dT%H:%M:%S%z', errors='coerce')
+        # Drop rows with NaT in 'date' column (where conversion failed)
+        df = df.dropna(subset=['date'])
+
+    # Select only the columns of interest
+    df_cleaned = df[['headline', 'date']]
+
+    # Sort by 'date' by latest to oldest
+    df_sorted = df_cleaned.sort_values(by='date', ascending=False)
+
+    # After sorting, convert the 'date' column to the desired string format
+    df_sorted['date'] = df_sorted['date'].dt.strftime('%Y-%m-%d %H:%M:%S')
+
+    # Save the cleaned and sorted data to a new CSV
+    df_sorted.to_csv(sorted_csv_file_path, index=False, encoding='utf-8')
+
+
+def sort_by_date_and_convert_date_format(input_file_path, output_file_path):
+    # Load the CSV data into a DataFrame
+    df = pd.read_csv(input_file_path, encoding='utf-8')
+
+    try:
+        # Convert the 'date' column to datetime format, including timezone
+        # The 'date' column includes timezone information, hence '%Y-%m-%d %H:%M:%S%z'
+        df['date'] = pd.to_datetime(df['date'], errors='coerce')
+
+        # Convert datetime to the new format without timezone information
+        # This step also effectively removes the timezone information
+        df['date'] = df['date'].dt.strftime('%Y-%m-%d %H:%M:%S')
+
+        # Drop rows where date conversion was not possible (if any)
+        df = df.dropna(subset=['date'])
+
+        # Sort by 'date' by latest to oldest
+        df_sorted = df.sort_values(by='date', ascending=True)
+
+        # Save the sorted data with the converted date format to a new CSV
+        df_sorted.to_csv(output_file_path, index=False, encoding='utf-8')
+
+    except KeyError as e:
+        print(f"Error: Missing expected column in the CSV file. {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+
+
 def max_25_news_per_day(data):
 
     df = pd.read_csv(data, encoding='utf-8')
@@ -49,6 +110,7 @@ def max_25_news_per_day(data):
     df = df.groupby('date').head(25)
     df.to_csv('clean_train_max25.csv', index=False, encoding='utf-8')
 
-# sort_by_date(csv_file_path)
-max_25_news_per_day(sorted_csv_file_path)
+sort_by_date_and_convert_date_format(csv_file_path, sorted_csv_file_path)
+# sort_by_date1(csv_file_path)
+# max_25_news_per_day(sorted_csv_file_path)
     

@@ -96,4 +96,4 @@ def loop_csv_multithreaded(csv_file, num_threads=24):
     new_df.to_csv('dataset_embedding_99to23.csv', index=False)
 
 # Example usage
-loop_csv_multithreaded('data/financial_headlines.csv')
+loop_csv_multithreaded('data/sorted_cnbc.csv')
