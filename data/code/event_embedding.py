@@ -4,6 +4,7 @@ import pandas as pd
 import threading
 from queue import Queue
 import tqdm
+import time
 
 client = OpenAI(api_key='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')
 
@@ -20,9 +21,17 @@ def normalize_l2(x):
 
 
 def embedding(text):
-    response = client.embeddings.create(
-        model="text-embedding-3-small", input=text, encoding_format="float"
-    )
+    response = ''
+    while response == '':
+        try:
+            response = client.embeddings.create(
+                model="text-embedding-3-small", input=text, encoding_format="float"
+            )
+        except Exception as e:
+            # sleep for 10 second and try again
+            print("Sleeping for 10 seconds...")
+            time.sleep(10)
+
     cut_dim = response.data[0].embedding[:256]
     norm_dim = normalize_l2(cut_dim)
     return norm_dim
@@ -68,7 +77,7 @@ def process_chunk(queue, results, start, end, df):
         })
     queue.put(local_results)
 
-def loop_csv_multithreaded(csv_file, num_threads=24):
+def loop_csv_multithreaded(csv_file, num_threads=50):
     df = pd.read_csv(csv_file)
     chunk_size = len(df) // num_threads
     threads = []
@@ -93,7 +102,7 @@ def loop_csv_multithreaded(csv_file, num_threads=24):
 
     # Write to a new CSV
     new_df = pd.DataFrame(results)
-    new_df.to_csv('dataset_embedding_99to23.csv', index=False)
+    new_df.to_csv('data/final_dataset/embedding_headlines_processed.csv', index=False)
 
 # Example usage
-loop_csv_multithreaded('data/sorted_cnbc.csv')
+loop_csv_multithreaded('data/headlines_processed.csv')

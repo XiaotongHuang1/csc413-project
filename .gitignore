@@ -1,3 +1,7 @@
 .DS_Store
 env
 data/sorted_train.csv
+data/final_dataset
+data/headlines_processed.csv
+data/headlines.csv
+data/sorted_cnbc_embedding_dataset.csv
