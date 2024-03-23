@@ -14,7 +14,7 @@ dji_data = dji_data.sort_values(by='Date').reset_index(drop=True)
 headlines_data = headlines_data.sort_values(by='Date').reset_index(drop=True)
 
 # Filter the dji_data from 2018-01-02 to 2020-06-03
-start_date = pd.to_datetime('2000-01-01')
+start_date = pd.to_datetime('2007-01-01')
 end_date = pd.to_datetime('2023-12-31')
 filtered_dji_data = dji_data[(dji_data['Date'] >= start_date) & (dji_data['Date'] <= end_date)]
 
