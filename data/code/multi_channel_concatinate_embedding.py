@@ -1,11 +1,27 @@
 import pandas as pd
 import numpy as np
+import sys
 
-def convert_embedding_string_to_array(embedding_str):
-    # Split the string into a list of strings, each representing a float
-    embedding_list_str = embedding_str.strip("[]").split()
-    # Convert the list of strings to a list of floats
-    embedding_list_float = [float(num) for num in embedding_list_str]
+# Set print options to ensure all elements of an array are printed
+np.set_printoptions(threshold=sys.maxsize)
+
+def convert_embedding_string_to_array(embedding_str, expected_length=300):
+    # Remove square brackets
+    embedding_str = embedding_str.strip("[]")
+    # If the string contains ellipses, indicating missing parts
+    if "..." in embedding_str:
+        # Split the string into available parts, ignoring "..."
+        available_parts = embedding_str.split("...")[0].split()
+        # Convert available parts to floats
+        embedding_list_float = [float(num) for num in available_parts]
+        # Calculate the number of missing elements
+        missing_elements = expected_length - len(embedding_list_float)
+        # Fill the missing parts with zeros or any method you deem appropriate
+        embedding_list_float += [0.0] * missing_elements
+    else:
+        # If there are no ellipses, proceed as before
+        embedding_list_str = embedding_str.split()
+        embedding_list_float = [float(num) for num in embedding_list_str]
     # Convert the list of floats to a NumPy array
     return np.array(embedding_list_float)
 
@@ -41,7 +57,7 @@ filtered_dji_data['Prev Adj Close'] = filtered_dji_data['Adj Close'].shift(1)
 # Initialize a list to hold the final structured data
 final_data_with_embeddings = []
 
-print(filtered_dji_data.sample(10))
+# print(filtered_dji_data.sample(10))
 
 for index, row in filtered_dji_data.iterrows():
     # Extract the current date's embeddings
