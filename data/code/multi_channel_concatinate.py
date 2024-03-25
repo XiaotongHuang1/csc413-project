@@ -1,8 +1,12 @@
 import pandas as pd
 import numpy as np
+import sys
+
+# Set print options to ensure all elements of an array are printed
+np.set_printoptions(threshold=sys.maxsize)
 
 # Load the data from the csv files
-headlines_data = pd.read_csv('data/financial_headlines.csv')
+headlines_data = pd.read_csv('data/headlines_processed.csv')
 dji_data = pd.read_csv('data/DJI_99to23_prices.csv')
 
 # Convert 'Date' column to datetime
@@ -72,8 +76,9 @@ for index, row in filtered_dji_data.iterrows():
     # Pad with avg of other days if there are not enough days
     if len(prices) < 30:
         pad_width = 30 - len(prices)
-        avg = np.mean(prices)
-        prices = np.pad(prices, (pad_width, 0), 'constant', constant_values=(avg, prices[0]))
+        # Use the available 'prices' average or a default if none are available
+        avg = np.mean(prices) if len(prices) > 0 else row['Adj Close']  # Fallback to current row's price
+        prices = np.pad(prices, (pad_width, 0), 'constant', constant_values=(avg, avg))
     
     # Fetch the corresponding day's headlines
     daily_headlines = headlines_data[headlines_data['Date'] == row['Date']]['headline'].tolist()
@@ -107,4 +112,4 @@ final_df = pd.DataFrame(final_data)
 # final_df.head()
 
 # Save the final_df to a csv file
-final_df.to_csv('data/final_data_99to23.csv', index=False)
+final_df.to_csv('data/final_dataset/dataset_without_embedding.csv', index=False)
