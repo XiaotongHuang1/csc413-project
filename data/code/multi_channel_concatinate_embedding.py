@@ -28,7 +28,7 @@ def convert_embedding_string_to_array(embedding_str, expected_length=300):
 
 
 # Load the data from the csv files
-headline_embeddings_data = pd.read_csv('data/final_dataset/sorted_embedding_headlines_processed.csv')
+headline_embeddings_data = pd.read_csv('data/final_dataset/sorted_embedding_headlines_processed_128.csv')
 dji_data = pd.read_csv('data/DJI_99to23_prices.csv')
 
 dji_data['Date'] = pd.to_datetime(dji_data['Date'])
@@ -65,22 +65,24 @@ for index, row in filtered_dji_data.iterrows():
 
     # Handle embedding logic (as before)
     if len(current_date_embeddings) > 0:
-        embeddings = np.array([embedding for embedding in current_date_embeddings[:25]])
-        if len(embeddings) < 25:
-            padding = np.mean(embeddings, axis=0)
-            additional_required = 25 - len(embeddings)
-            padding = np.tile(padding, (additional_required, 1))
-            embeddings = np.vstack((embeddings, padding))
+        embeddings = np.array([embedding for embedding in current_date_embeddings[:5]])
+        # if len(embeddings) < 25:
+        #     padding = np.mean(embeddings, axis=0)
+        #     additional_required = 25 - len(embeddings)
+        #     padding = np.tile(padding, (additional_required, 1))
+        #     embeddings = np.vstack((embeddings, padding))
     
-    start_idx = max(index - 30, 0)
-    temp_df = filtered_dji_data.iloc[start_idx:index]
+    # Find the date 128 trading days before the current row's date
+    target_date = row['Date'] - pd.DateOffset(days=128)
+    # Then find the closest date in your DataFrame no later than the target_date
+    temp_df = filtered_dji_data[(filtered_dji_data['Date'] <= row['Date']) & (filtered_dji_data['Date'] > target_date)].copy()
 
     # Calculate 'prices' based on available data in 'temp_df'
     prices = temp_df['Adj Close'].tolist()
 
-    if len(prices) < 30:
-        pad_width = 30 - len(prices)
-        # Use the available 'prices' average or a default if none are available
+    # If less than 128, pad as before
+    if len(prices) < 128:
+        pad_width = 128 - len(prices)
         avg = np.mean(prices) if len(prices) > 0 else row['Adj Close']  # Fallback to current row's price
         prices = np.pad(prices, (pad_width, 0), 'constant', constant_values=(avg, avg))
 
@@ -89,7 +91,7 @@ for index, row in filtered_dji_data.iterrows():
     final_data_with_embeddings.append({
         'date': row['Date'],
         'prices': prices,
-        'headlines': embeddings.flatten(),
+        'headlines': embeddings.flatten() if 'embeddings' in locals() else [],
         'y': y
     })
 
@@ -105,4 +107,4 @@ print(final_df_with_embeddings.head())
 # final_df.head()
 
 # Save the final_df to a csv file
-final_df_with_embeddings.to_csv('data/final_dataset/dataset1.csv', index=False)
+final_df_with_embeddings.to_csv('data/final_dataset/dataset_128_prices128_5embedding.csv', index=False)

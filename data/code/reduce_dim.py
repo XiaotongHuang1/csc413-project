@@ -6,9 +6,9 @@ import sys
 np.set_printoptions(threshold=sys.maxsize)
 
 
-def reduce_dim(embedding, expected_dim=64):
+def reduce_dim(embedding, expected_dim=128):
     """
-    Reduces the dimensionality of the embedding from 256 to 64.
+    Reduces the dimensionality of the embedding from 256 to expected_dim.
     :param embedding_str: The string representation of the embedding.
     :param expected_dim: The expected dimensionality of the embedding.
     :return: The reduced dimensionality embedding.
@@ -35,4 +35,4 @@ headline_embeddings_data['embedding'] = headline_embeddings_data['embedding'].ap
 headlines_data = headline_embeddings_data.sort_values(by='Date').reset_index(drop=True)
 
 # Output the processed data to a new csv file
-headlines_data.to_csv('data/final_dataset/sorted_embedding_headlines_processed_64.csv', index=False)
+headlines_data.to_csv('data/final_dataset/sorted_embedding_headlines_processed_128.csv', index=False)
