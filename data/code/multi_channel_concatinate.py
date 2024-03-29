@@ -6,7 +6,7 @@ import sys
 np.set_printoptions(threshold=sys.maxsize)
 
 # Load the data from the csv files
-headlines_data = pd.read_csv('data/headlines_processed.csv')
+headlines_data = pd.read_csv('data/clean_train_10years_max25.csv')
 dji_data = pd.read_csv('data/DJI_99to23_prices.csv')
 
 # Convert 'Date' column to datetime
