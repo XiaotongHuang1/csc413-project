@@ -122,7 +122,6 @@ class TemporalConvNet(nn.Module):
         y = y[:, -1, :]  # Take the last time step
         return self.fc(y)
 
-
 # Improved model
 
 class Chomp1d(nn.Module):
@@ -180,7 +179,7 @@ class TemporalConvNet(nn.Module):
 
 class ImprovedTransformerModel(nn.Module):
     def __init__(self, input_size, num_layers, num_heads, hidden_dim, output_size, tcn_channels, kernel_size, dropout, post_hidden_dims):
-        super(TransformerModel, self).__init__()
+        super(ImprovedTransformerModel, self).__init__()
         # Temporal Convolutional Network
         self.tcn = TemporalConvNet(input_size, tcn_channels, kernel_size, dropout)
         
