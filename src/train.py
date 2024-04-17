@@ -8,6 +8,8 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 import numpy as np
 from torch.nn.utils import weight_norm
 import math
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
 
 
 class StockDataset(Dataset):
@@ -23,48 +25,8 @@ class StockDataset(Dataset):
 
 
 # Baseline model
-    
-# Base LSTM model
-class LSTM(nn.Module):
-    def __init__(self, input_size, hidden_size):
-        super(LSTM, self).__init__()
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-        self.lstm = nn.LSTM(input_size, hidden_size, batch_first=True)
-        self.fc = nn.Linear(hidden_size, 1)  # Output size is 1 for binary classification
 
-    def forward(self, X):
-        # _, (h, _) = self.lstm(X)
-        # out = self.fc(h[-1])  # Use the last hidden state
-        # return out
-        # Get all hidden states
-        output, _ = self.lstm(X)
-        # Calculate the average across the sequence dimension
-        avg_hidden_state = output.mean(dim=1)
-        # Pass the average hidden state through the fully connected layer
-        out = self.fc(avg_hidden_state)
-        return out
-
-# Base Transformer model
-class TransformerModel(nn.Module):
-    def __init__(self, input_size, num_layers, num_heads, hidden_dim, output_size):
-        super(TransformerModel, self).__init__()
-        self.encoder = nn.TransformerEncoder(
-            nn.TransformerEncoderLayer(
-                d_model=input_size,
-                nhead=num_heads,
-                dim_feedforward=hidden_dim
-            ),
-            num_layers=num_layers
-        )
-        self.fc = nn.Linear(input_size, output_size)
-
-    def forward(self, x):
-        x = self.encoder(x)
-        x = torch.mean(x, dim=1)  # Pooling
-        x = self.fc(x)
-        return x
-
+# Base Temporal Convolutional Network model
 class Chomp1d(nn.Module):
     def __init__(self, chomp_size):
         super(Chomp1d, self).__init__()
@@ -98,8 +60,7 @@ class TemporalBlock(nn.Module):
         out = self.net(x)
         res = x if self.downsample is None else self.downsample(x)
         return self.relu(out + res)
-
-# Base Temporal Convolutional Network model
+    
 class TemporalConvNet(nn.Module):
     def __init__(self, num_inputs, num_channels, kernel_size=2, dropout=0.2):
         super(TemporalConvNet, self).__init__()
@@ -121,8 +82,27 @@ class TemporalConvNet(nn.Module):
         y = y.transpose(1, 2)  # Convert back to (batch_size, seq_length, num_channels)
         y = y[:, -1, :]  # Take the last time step
         return self.fc(y)
+    
+# Base LSTM model
+class LSTM(nn.Module):
+    def __init__(self, input_size, hidden_size):
+        super(LSTM, self).__init__()
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.lstm = nn.LSTM(input_size, hidden_size, batch_first=True)
+        self.fc = nn.Linear(hidden_size, 1)  # Output size is 1 for binary classification
 
-# Improved model
+    def forward(self, X):
+        # Get all hidden states
+        output, _ = self.lstm(X)
+        # Calculate the average across the sequence dimension
+        avg_hidden_state = output.mean(dim=1)
+        # Pass the average hidden state through the fully connected layer
+        out = self.fc(avg_hidden_state)
+        return out
+        
+
+# Improved model (new design)
 
 class Chomp1d(nn.Module):
     def __init__(self, chomp_size):
@@ -138,17 +118,19 @@ class TemporalBlock(nn.Module):
         self.conv1 = weight_norm(nn.Conv1d(n_inputs, n_outputs, kernel_size,
                                            stride=stride, padding=padding, dilation=dilation))
         self.chomp1 = Chomp1d(padding)
+        self.batchnorm1 = nn.BatchNorm1d(n_outputs)  # Add batch normalization
         self.relu1 = nn.ReLU()
         self.dropout1 = nn.Dropout(dropout)
 
         self.conv2 = weight_norm(nn.Conv1d(n_outputs, n_outputs, kernel_size,
                                            stride=stride, padding=padding, dilation=dilation))
         self.chomp2 = Chomp1d(padding)
+        self.batchnorm2 = nn.BatchNorm1d(n_outputs)  # Add batch normalization
         self.relu2 = nn.ReLU()
         self.dropout2 = nn.Dropout(dropout)
 
-        self.net = nn.Sequential(self.conv1, self.chomp1, self.relu1, self.dropout1,
-                                 self.conv2, self.chomp2, self.relu2, self.dropout2)
+        self.net = nn.Sequential(self.conv1, self.chomp1, self.batchnorm1, self.relu1, self.dropout1,
+                                 self.conv2, self.chomp2, self.batchnorm2, self.relu2, self.dropout2)
         self.downsample = nn.Conv1d(n_inputs, n_outputs, 1) if n_inputs != n_outputs else None
         self.relu = nn.ReLU()
 
@@ -215,7 +197,27 @@ class ImprovedTransformerModel(nn.Module):
         x = torch.mean(x, dim=1)  # Pooling
         x = self.fc(x)
         return x
+    
 
+# Base Transformer model
+class TransformerModel(nn.Module):
+    def __init__(self, input_size, num_layers, num_heads, hidden_dim, output_size):
+        super(TransformerModel, self).__init__()
+        self.encoder = nn.TransformerEncoder(
+            nn.TransformerEncoderLayer(
+                d_model=input_size,
+                nhead=num_heads,
+                dim_feedforward=hidden_dim
+            ),
+            num_layers=num_layers
+        )
+        self.fc = nn.Linear(input_size, output_size)
+
+    def forward(self, x):
+        x = self.encoder(x)
+        x = torch.mean(x, dim=1)  # Pooling
+        x = self.fc(x)
+        return x
 
 # loading the data
 dp = pd.read_csv('dataset.csv')
@@ -256,16 +258,9 @@ for prediction_str in dp['prediction']:
     prediction_features.append(numerical_predictions)
 
 # Concatenate embeddings, predictions, scores, and prices
+# concatenated_features = [price for price in zip(price_features)]
+# concatenated_features = [prediction + score + price for prediction, score, price in zip(prediction_features, score_features, price_features)]
 concatenated_features = [embedding + prediction + score + price for embedding, prediction, score, price in zip(embedding_features, prediction_features, score_features, price_features)]
-
-lengths = [len(embedding) + len(prediction) + len(score) + len(price) for embedding, prediction, score, price in zip(embedding_features, prediction_features, score_features, price_features)]
-if len(set(lengths)) == 1:
-    print("All rows have the same total length.")
-else:
-    print("Different rows have different total lengths.")
-    for i, length in enumerate(lengths):
-        print(f"Row {i}: Total length = {length}")
-
 
 # Convert to NumPy array
 features = np.array(concatenated_features)
@@ -278,6 +273,18 @@ X_train, X_temp, y_train, y_temp = train_test_split(features, targets, test_size
 
 # Split the temporary set into validation and test sets (50% validation, 50% test)
 X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42)
+
+
+# Normalize the dataset (optional)
+# Define the scaler
+scaler = StandardScaler()
+
+# Fit the scaler to the training data and transform it
+X_train = scaler.fit_transform(X_train)
+
+# Transform the validation and test data
+X_val = scaler.transform(X_val)
+X_test = scaler.transform(X_test)
 
 # Convert to PyTorch tensors
 X_train, y_train = torch.tensor(X_train, dtype=torch.float32), torch.tensor(y_train, dtype=torch.float32)
@@ -294,18 +301,17 @@ val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
 
-
 # Initialize the model
-input_size = 16640  # 64 * 256 + 128 + 64 + 64
+input_size = 64 * 256 + 128 + 64 + 64
 num_layers = 2
-num_heads = 32
-hidden_dim = 32
+num_heads = 128
+hidden_dim = 512
 output_size = 1
 num_classes = 16
-num_channels = [32, 64, 128]  # Example channel sizes
-kernel_size = 3
+num_channels = [64, 128, 256]
+kernel_size = 8
 dropout = 0.5
-post_hidden_dims = 32
+post_hidden_dims = 256
 
 # model = TemporalConvNet(input_size, num_channels, kernel_size, dropout)
 # model = TransformerModel(input_size, num_layers, num_heads, hidden_dim, output_size)
@@ -317,13 +323,19 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 # Loss and optimizer
 criterion = nn.BCEWithLogitsLoss()
-optimizer = optim.Adam(model.parameters(), lr=1e-03)
+optimizer = optim.Adam(model.parameters(), lr=1e-06, weight_decay=1e-5)
+
+# Initialize lists to store metrics
+train_losses = []
+val_losses = []
+val_accuracies = []
 
 # Training loop
-counter = 0
 num_epochs = 10
 for epoch in range(num_epochs):
     model.train()
+    epoch_loss = 0
+    counter = 0
     for batch_features, batch_targets in train_loader:
         optimizer.zero_grad()
         batch_features = batch_features.to(device)
@@ -333,9 +345,12 @@ for epoch in range(num_epochs):
         loss.backward()
         optimizer.step()
 
+        epoch_loss += loss.item()
         counter += 1
         if counter % 50 == 0:
             print(f'Epoch {epoch+1}, Batch {counter}, Loss: {loss.item()}')
+
+    train_losses.append(epoch_loss / len(train_loader))
 
     # Validation
     model.eval()
@@ -344,9 +359,14 @@ for epoch in range(num_epochs):
         y_val = y_val.to(device)
         val_outputs = model(X_val.unsqueeze(1)).squeeze()
         val_loss = criterion(val_outputs, y_val)
+        val_losses.append(val_loss.item())
+
         val_preds = torch.round(torch.sigmoid(val_outputs))
         val_accuracy = accuracy_score(y_val.cpu().numpy(), val_preds.cpu().numpy())
+        val_accuracies.append(val_accuracy)
+
         print(f'Epoch {epoch+1}, Validation Loss: {val_loss.item()}, Validation Accuracy: {val_accuracy}')
+
 
 model.to('cpu')
 # Test evaluation
@@ -361,3 +381,25 @@ with torch.no_grad():
 
 print(f'Test Accuracy: {test_accuracy}, Precision: {test_precision}, Recall: {test_recall}, F1 Score: {test_f1}')
 
+
+# Plotting
+epochs = range(1, num_epochs + 1)
+plt.figure(figsize=(12, 6))
+
+plt.subplot(1, 2, 1)
+plt.plot(epochs, train_losses, label='Training Loss')
+plt.plot(epochs, val_losses, label='Validation Loss')
+plt.title('Training and Validation Loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.legend()
+
+plt.subplot(1, 2, 2)
+plt.plot(epochs, val_accuracies, label='Validation Accuracy')
+plt.title('Validation Accuracy')
+plt.xlabel('Epochs')
+plt.ylabel('Accuracy')
+plt.legend()
+
+plt.tight_layout()
+plt.show()
