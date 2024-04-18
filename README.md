@@ -8,6 +8,8 @@
 
 Machine learning technologies, especially within the financial sector, have emerged as both a critical and popular area of focus. Concurrently, the Transformer model has emerged as a notably powerful tool for sentiment analysis, demonstrating unprecedented capabilities in interpreting complex data. We introduce TCN + Transformer, a model that combines the Transformer with the Temporal Convolutional Networks (TCN), aiming to set a new benchmark in handling time-series data. This study delves into the innovative application of the Transformer model, leveraging its strengths to analyze vast datasets of news articles and historical stock price movements. Our aim is to harness this model’s predictive prowess to forecast future market trends. Through our investigation, we present a nuanced understanding of the interplay between news-driven sentiment and stock price trends, offering promising insights for predictive analytics in financial markets.
 
+## How To Start
+
 ## Introduction
 
 When individuals read a news article regarding a corporation, it is common for them to speculate about its potential impact on the stock market and the company’s future. Frequently asked questions might include inquiries such as: ’What is the forecasted stock performance of the company?’ and ’Are there expectations for growth or decline?’ In reality, the interplay between financial markets and information dissemination has long been a subject of interest in the field of financial analytics. Both the general public and specialists—from researchers to corporations—are fascinated with this field, as all parties aim to predict stock market trends and secure financial profits.
